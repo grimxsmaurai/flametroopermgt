@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personnel Tracker - First Order Flame Trooper Command</title>
+    <meta name="description" content="Register, update, and track First Order Flame Trooper personnel records and activity.">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #FF4500 0%, #DC143C 30%, #B22222 60%, #8B0000 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* Navigation */
+        .navbar {
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 1rem 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #FF6347;
+            text-decoration: none;
+        }
+
+        .logo span {
+            margin-left: 0.5rem;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            background: #FF6347;
+            color: white;
+        }
+
+        .main-content {
+            margin-top: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: calc(100vh - 100px);
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            background: linear-gradient(135deg, #FF6347 0%, #FF4500 50%, #DC143C 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 10px,
+                rgba(255,255,255,0.05) 10px,
+                rgba(255,255,255,0.05) 20px
+            );
+            animation: movePattern 10s linear infinite;
+        }
+
+        @keyframes movePattern {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        .header h1 {
+            position: relative;
+            z-index: 2;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            position: relative;
+            z-index: 2;
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .form-container {
+            padding: 40px;
+        }
+
+        .mode-selector {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .mode-buttons {
+            display: inline-flex;
+            background: #f8f9fa;
+            border-radius: 50px;
+            padding: 5px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            flex-wrap: wrap;
+        }
+
+        .mode-btn {
+            padding: 12px 20px;
+            border: none;
+            background: transparent;
+            color: #2c3e50;
+            font-weight: 600;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .mode-btn.active {
+            background: linear-gradient(135deg, #FF6347 0%, #FF4500 100%);
+            color: white;
+            box-shadow: 0 4px 10px rgba(255, 99, 71, 0.4);
+        }
+
+        .mode-btn:hover:not(.active) {
+            background: #e9ecef;
+        }
+
+        .user-search {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border-left: 4px solid #FF6347;
+        }
+
+        .search-results {
+            margin-top: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .search-result {
+            padding: 12px;
+            background: white;
+            margin: 5px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .search-result:hover {
+            background: #ffe8e1;
+            border-color: #FF6347;
+        }
+
+        .search-result .username {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .search-result .details {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 4px;
+        }
+
+        .user-display {
+            margin-bottom: 30px;
+        }
+
+        .user-card {
+            background: linear-gradient(135deg, #8B0000 0%, #A0522D 30%, #CD853F 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(139, 0, 0, 0.4);
+        }
+
+        .user-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+        }
+
+        .user-card-header h3 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: #ecf0f1;
+        }
+
+        .user-status {
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .user-status.Active {
+            background: #FF6347;
+            color: white;
+        }
+
+        .user-status.Inactive {
+            background: #8B0000;
+            color: white;
+        }
+
+        .user-status.Pending {
+            background: #FF8C00;
+            color: white;
+        }
+
+        .user-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .info-item {
+            padding: 12px;
+            background: rgba(255, 69, 0, 0.1);
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 99, 71, 0.2);
+        }
+
+        .info-item.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .info-item label {
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #FFE4E1;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .info-item span {
+            font-size: 14px;
+            font-weight: 600;
+            color: #ecf0f1;
+        }
+
+        .highlight {
+            color: #FFD700 !important;
+            font-size: 18px !important;
+        }
+
+        .rank-badge {
+            background: linear-gradient(135deg, #DC143C 0%, #8B0000 100%);
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 12px !important;
+            color: white !important;
+            display: inline-block;
+        }
+
+        .activity-score {
+            background: linear-gradient(135deg, #FF8C00 0%, #FF6347 100%);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 16px !important;
+            color: white !important;
+            display: inline-block;
+            font-weight: 700;
+        }
+
+        .form-grid {
+            display: grid;
+            gap: 25px;
+        }
+
+        .form-group {
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e1e8ed;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #FF6347;
+            box-shadow: 0 0 0 3px rgba(255, 99, 71, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .form-group input::placeholder {
+            color: #95a5a6;
+            font-style: italic;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #FF6347 0%, #DC143C 100%);
+            color: white;
+            padding: 18px 40px;
+            border: none;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 20px rgba(255, 99, 71, 0.4);
+            width: 100%;
+            margin-top: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 25px rgba(255, 99, 71, 0.5);
+        }
+
+        .submit-btn:active {
+            transform: translateY(-1px);
+        }
+
+        .submit-btn:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .status-active { color: #FF6347; }
+        .status-inactive { color: #8B0000; }
+        .status-pending { color: #FF8C00; }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-weight: 600;
+            display: none;
+        }
+
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+
+        .alert.warning {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .required {
+            color: #8B0000;
+        }
+
+        .mobile-menu {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+        }
+
+        .mobile-menu span {
+            width: 25px;
+            height: 3px;
+            background: white;
+            margin: 3px 0;
+            transition: 0.3s;
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                width: 100%;
+                background: rgba(0, 0, 0, 0.95);
+                flex-direction: column;
+                padding: 1rem 0;
+                gap: 0;
+            }
+
+            .nav-links.active {
+                display: flex;
+            }
+
+            .nav-links a {
+                padding: 1rem;
+                border-bottom: 1px solid #333;
+            }
+
+            .mobile-menu {
+                display: flex;
+            }
+
+            .two-column {
+                grid-template-columns: 1fr;
+                gap: 25px;
+            }
+            
+            .container {
+                margin: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .form-container {
+                padding: 30px 25px;
+            }
+
+            .user-info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .mode-buttons {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .mode-btn {
+                margin: 2px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                🔥 <span>First Order Command</span>
+            </a>
+            <ul class="nav-links" id="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="#" class="active">Personnel Tracker</a></li>
+                <li><a href="index.html#features">Features</a></li>
+                <li><a href="index.html#stats">Statistics</a></li>
+                <li><a href="index.html#contact">Contact</a></li>
+            </ul>
+            <div class="mobile-menu" onclick="toggleMobileMenu()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <div class="container">
+            <div class="header">
+                <h1>🔥 First Order Flame Trooper</h1>
+                <p>Activity Tracker & Member Management</p>
+            </div>
+            
+            <div class="form-container">
+                <!-- Alert Messages -->
+                <div id="alertContainer"></div>
+
+                <!-- Debug Panel -->
+                <div class="debug-panel" style="background: #f8f9fa; padding: 20px; border-radius: 12px; margin-bottom: 30px; border-left: 4px solid #17a2b8;">
+                    <h3 style="color: #2c3e50; margin-bottom: 15px;">🔧 Debug Panel</h3>
+                    <p style="color: #6c757d; margin-bottom: 15px;">Use these tools to diagnose connection issues:</p>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button type="button" onclick="testConnection()" style="background: #17a2b8; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: 600;">🧪 Test API Connection</button>
+                        <button type="button" onclick="window.open(WEBAPP_URL, '_blank')" style="background: #28a745; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: 600;">🌐 Open API in New Tab</button>
+                        <button type="button" onclick="showDeploymentHelp()" style="background: #ffc107; color: #212529; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: 600;">❓ Deployment Help</button>
+                        <button type="button" onclick="loadExistingTroopers()" style="background: #6f42c1; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: 600;">🔄 Reload Data</button>
+                    </div>
+                </div>
+
+                <!-- Mode Selector -->
+                <div class="mode-selector">
+                    <div class="mode-buttons">
+                        <button type="button" class="mode-btn active" id="newUserBtn" onclick="setMode('new')">
+                            ➕ Create New User
+                        </button>
+                        <button type="button" class="mode-btn" id="updateUserBtn" onclick="setMode('update')">
+                            ✏️ Update Existing User
+                        </button>
+                        <button type="button" class="mode-btn" id="searchUserBtn" onclick="setMode('search')">
+                            🔍 Search & View User
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- User Search Section -->
+                <div class="user-search" id="userSearch" style="display: none;">
+                    <div class="form-group">
+                        <label for="searchUser">Search Existing User</label>
+                        <input type="text" id="searchUser" placeholder="Enter Roblox or Discord username to search">
+                        <div class="search-results" id="searchResults"></div>
+                    </div>
+                </div>
+                
+                <!-- User Display Section -->
+                <div class="user-display" id="userDisplay" style="display: none;">
+                    <div class="user-card">
+                        <div class="user-card-header">
+                            <h3 id="displayUsername">🔥 Flame Trooper Profile</h3>
+                            <div class="user-status" id="displayStatus">Active</div>
+                        </div>
+                        <div class="user-info-grid">
+                            <div class="info-item">
+                                <label>Roblox Username</label>
+                                <span id="displayRoblox">-</span>
+                            </div>
+                            <div class="info-item">
+                                <label>Discord Username</label>
+                                <span id="displayDiscord">-</span>
+                            </div>
+                            <div class="info-item">
+                                <label>Date Joined</label>
+                                <span id="displayDateJoined">-</span>
+                            </div>
+                            <div class="info-item">
+                                <label>Events Attended</label>
+                                <span id="displayEvents" class="highlight">0</span>
+                            </div>
+                            <div class="info-item">
+                                <label>Rank</label>
+                                <span id="displayRank" class="rank-badge">-</span>
+                            </div>
+                            <div class="info-item">
+                                <label>Company</label>
+                                <span id="displayCompany">-</span>
+                            </div>
+                            <div class="info-item">
+                                <label>Last Event Date</label>
+                                <span id="displayLastEvent">-</span>
+                            </div>
+                            <div class="info-item full-width">
+                                <label>Activity Score</label>
+                                <span id="displayActivityScore" class="activity-score">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Main Form -->
+                <form id="memberForm">
+                    <div class="form-grid">
+                        <div class="two-column">
+                            <div class="form-group">
+                                <label for="robloxUsername">Roblox Username <span class="required">*</span></label>
+                                <input type="text" id="robloxUsername" name="robloxUsername" placeholder="Enter your Roblox username" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="discordUsername">Discord Username <span class="required">*</span></label>
+                                <input type="text" id="discordUsername" name="discordUsername" placeholder="User#1234 or @username" required>
+                            </div>
+                        </div>
+                        
+                        <div class="two-column">
+                            <div class="form-group">
+                                <label for="dateJoined">Date Joined <span class="required">*</span></label>
+                                <input type="date" id="dateJoined" name="dateJoined" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="eventsAttended">Events Attended</label>
+                                <input type="number" id="eventsAttended" name="eventsAttended" min="0" placeholder="0" value="0">
+                            </div>
+                        </div>
+                        
+                        <div class="two-column">
+                            <div class="form-group">
+                                <label for="status">Status <span class="required">*</span></label>
+                                <select id="status" name="status" required>
+                                    <option value="">Select Status</option>
+                                    <option value="Active">Active</option>
+                                    <option value="Inactive">Inactive</option>
+                                    <option value="Pending">Pending</option>
+                                    <option value="On Leave">On Leave</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="rank">Rank</label>
+                                <select id="rank" name="rank">
+                                    <option value="">Select Rank</option>
+                                    <option value="E-1">E-1</option>
+                                    <option value="E-2">E-2</option>
+                                    <option value="E-3">E-3</option>
+                                    <option value="E-4">E-4</option>
+                                    <option value="E-5">E-5</option>
+                                    <option value="E-6">E-6</option>
+                                    <option value="E-7">E-7</option>
+                                    <option value="E-8">E-8</option>
+                                    <option value="E-9">E-9</option>
+                                    <option value="N1">N1</option>
+                                    <option value="O-1">O-1</option>
+                                    <option value="O-2">O-2</option>
+                                    <option value="O-3">O-3</option>
+                                    <option value="O-4">O-4</option>
+                                    <option value="O-5">O-5</option>
+                                    <option value="O-6">O-6</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="two-column">
+                            <div class="form-group">
+                                <label for="company">Company</label>
+                                <input type="text" id="company" name="company" placeholder="Enter company name">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="lastEventDate">Last Event Date</label>
+                                <input type="date" id="lastEventDate" name="lastEventDate">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="submit-btn" id="submitBtn">Create New Trooper</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 🔥 INTEGRATED WITH GOOGLE APPS SCRIPT WEB APP 🔥
+        // API Endpoint: https://script.google.com/macros/s/AKfycbwIs_L2CP2TAoCee_UnYQ2pD5N9r37LiQPMhQrvsBAI1wMdYbq8jtPWbM2l5IcQXeZI/exec
+        const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwIs_L2CP2TAoCee_UnYQ2pD5N9r37LiQPMhQrvsBAI1wMdYbq8jtPWbM2l5IcQXeZI/exec';
+        
+        // State management
+        let currentMode = 'new';
+        let selectedUser = null;
+        let isSubmitting = false;
+
+        // Mobile menu toggle
+        function toggleMobileMenu() {
+            const navLinks = document.getElementById('nav-links');
+            navLinks.classList.toggle('active');
+        }
+
+        // Test API connection on page load
+        async function testConnection() {
+            try {
+                showAlert('warning', '🔥 Testing connection to Google Apps Script...');
+                console.log('🧪 Testing API connection to:', WEBAPP_URL);
+                console.log('🌍 Current page origin:', window.location.origin);
+                console.log('🌍 User agent:', navigator.userAgent);
+                
+                // Test with multiple approaches
+                const testMethods = [
+                    { name: 'Standard Fetch', method: 'standard' },
+                    { name: 'No-CORS Fetch', method: 'no-cors' },
+                    { name: 'JSONP Fallback', method: 'jsonp' }
+                ];
+                
+                for (const testMethod of testMethods) {
+                    console.log(`🧪 Trying ${testMethod.name}...`);
+                    
+                    try {
+                        let response, text;
+                        
+                        if (testMethod.method === 'standard') {
+                            response = await fetch(WEBAPP_URL, {
+                                method: 'GET',
+                                mode: 'cors',
+                                headers: {
+                                    'Accept': 'application/json, text/plain, */*',
+                                },
+                            });
+                            
+                            console.log(`📡 ${testMethod.name} Response status:`, response.status);
+                            console.log(`📡 ${testMethod.name} Response headers:`, Object.fromEntries(response.headers));
+                            
+                            text = await response.text();
+                            console.log(`📄 ${testMethod.name} Response text:`, text);
+                            
+                        } else if (testMethod.method === 'no-cors') {
+                            response = await fetch(WEBAPP_URL, {
+                                method: 'GET',
+                                mode: 'no-cors',
+                            });
+                            
+                            console.log(`📡 ${testMethod.name} Response status:`, response.status);
+                            console.log(`📡 ${testMethod.name} Response type:`, response.type);
+                            
+                        } else if (testMethod.method === 'jsonp') {
+                            // JSONP fallback
+                            await testJSONP();
+                            continue;
+                        }
+                        
+                        if (response.ok && text && text.includes('First Order Flame Trooper API is running')) {
+                            showAlert('success', `✅ Connected via ${testMethod.name}!`);
+                            console.log(`🔥 API Connection via ${testMethod.name}: SUCCESS`);
+                            return; // Success, stop trying other methods
+                        } else if (testMethod.method === 'no-cors' && response.type === 'opaque') {
+                            showAlert('warning', `⚠️ ${testMethod.name} completed but response is opaque (this is normal for no-cors)`);
+                            console.log(`🔥 ${testMethod.name}: Opaque response (may be working)`);
+                        }
+                        
+                    } catch (methodError) {
+                        console.error(`❌ ${testMethod.name} failed:`, methodError);
+                    }
+                }
+                
+                // If all methods failed
+                showAlert('error', '❌ All connection methods failed. Please check Google Apps Script deployment.');
+                
+            } catch (error) {
+                showAlert('error', '❌ Unable to connect to Google Apps Script: ' + error.message);
+                console.error('❌ API Connection Error:', error);
+                console.error('Error details:', {
+                    name: error.name,
+                    message: error.message,
+                    stack: error.stack
+                });
+                
+                // Provide specific troubleshooting advice
+                if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                    console.error('🔍 This looks like a CORS or network connectivity issue');
+                    console.error('🔍 Possible solutions:');
+                    console.error('   1. Check if your Google Apps Script is deployed as a web app with "Anyone" access');
+                    console.error('   2. Verify the deployment URL is correct');
+                    console.error('   3. Try redeploying the Google Apps Script with a new deployment');
+                    
+                    showAlert('error', '🔍 CORS/Network issue detected. Check console for troubleshooting steps.');
+                }
+            }
+        }
+
+        // JSONP fallback test
+        function testJSONP() {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                const callbackName = 'jsonp_callback_' + Math.round(100000 * Math.random());
+                
+                window[callbackName] = function(data) {
+                    delete window[callbackName];
+                    document.body.removeChild(script);
+                    console.log('📡 JSONP Response:', data);
+                    showAlert('success', '✅ JSONP connection successful!');
+                    resolve(data);
+                };
+                
+                script.onerror = function() {
+                    delete window[callbackName];
+                    document.body.removeChild(script);
+                    console.error('❌ JSONP failed');
+                    reject(new Error('JSONP request failed'));
+                };
+                
+                // Modify URL for JSONP (if your Google Apps Script supports it)
+                script.src = `${WEBAPP_URL}?callback=${callbackName}`;
+                document.body.appendChild(script);
+                
+                // Timeout after 10 seconds
+                setTimeout(() => {
+                    if (window[callbackName]) {
+                        delete window[callbackName];
+                        if (document.body.contains(script)) {
+                            document.body.removeChild(script);
+                        }
+                        reject(new Error('JSONP timeout'));
+                    }
+                }, 10000);
+            });
+        }
+        function showDeploymentHelp() {
+            const helpMessage = `
+🔧 Google Apps Script Deployment Checklist:
+
+1. ✅ Go to script.google.com
+2. ✅ Open your Flame Trooper script
+3. ✅ Click "Deploy" → "New Deployment"
+4. ✅ Choose type: "Web app"
+5. ✅ Set "Execute as": Me
+6. ✅ Set "Who has access": Anyone
+7. ✅ Click "Deploy"
+8. ✅ Copy the new deployment URL
+9. ✅ Update the WEBAPP_URL in your HTML
+
+⚠️ Common Issues:
+• Script not saved before deploying
+• Wrong access permissions (must be "Anyone")
+• Using old deployment URL
+• Script contains syntax errors
+
+🧪 Test: Visit your deployment URL directly - you should see:
+"First Order Flame Trooper API is running"
+            `;
+            
+            alert(helpMessage);
+            console.log('🔧 Deployment Help:', helpMessage);
+        }
+
+        // Fallback: Generate CSV data if API fails
+        function generateFallbackCSV(data) {
+            const activityScore = parseInt(data.eventsAttended) || 0;
+            
+            const rowData = [
+                data.robloxUsername || '',
+                data.discordUsername || '',
+                data.dateJoined || new Date().toISOString().split('T')[0],
+                parseInt(data.eventsAttended) || 0,
+                data.status || '',
+                data.rank || '',
+                data.company || '',
+                data.lastEventDate || '',
+                new Date().toISOString(),
+                activityScore
+            ];
+            
+            const csvData = rowData.map(item => `"${item}"`).join('\t');
+            
+            showAlert('warning', '🔄 API unavailable - Generated offline data. Copy the data below and paste into your Google Sheet manually.');
+            
+            const outputDiv = document.createElement('div');
+            outputDiv.style.cssText = 'margin-top: 20px; padding: 20px; background: #fff3cd; border-radius: 10px; border-left: 4px solid #ffc107;';
+            outputDiv.innerHTML = `
+                <h3 style="color: #856404; margin-bottom: 15px;">📋 Manual Entry Data</h3>
+                <p style="color: #856404; margin-bottom: 10px;">Copy this data and paste it into your Google Sheet:</p>
+                <textarea style="width: 100%; height: 100px; padding: 10px; font-family: monospace; font-size: 12px; border: 1px solid #ccc; border-radius: 5px;" readonly>${csvData}</textarea>
+                <button onclick="navigator.clipboard.writeText('${csvData}').then(() => alert('✅ Data copied to clipboard!'))" style="margin-top: 10px; background: #28a745; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">📋 Copy Data</button>
+            `;
+            
+            document.getElementById('alertContainer').appendChild(outputDiv);
+            
+            return { success: true, fallback: true, data: { activityScore } };
+        }
+
+        // Show deployment help
+        function showDeploymentHelp() {
+            const helpMessage = `
+🔧 Google Apps Script Deployment Checklist:
+
+1. ✅ Go to script.google.com
+2. ✅ Open your Flame Trooper script
+3. ✅ Click "Deploy" → "New Deployment"
+4. ✅ Choose type: "Web app"
+5. ✅ Set "Execute as": Me
+6. ✅ Set "Who has access": Anyone
+7. ✅ Click "Deploy"
+8. ✅ Copy the new deployment URL
+9. ✅ Update the WEBAPP_URL in your HTML
+
+⚠️ Common Issues:
+• Script not saved before deploying
+• Wrong access permissions (must be "Anyone")
+• Using old deployment URL
+• Script contains syntax errors
+
+🧪 Test: Visit your deployment URL directly - you should see:
+"First Order Flame Trooper API is running"
+            `;
+            
+            alert(helpMessage);
+            console.log('🔧 Deployment Help:', helpMessage);
+        }
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                const callbackName = 'jsonp_callback_' + Math.round(100000 * Math.random());
+                
+                window[callbackName] = function(data) {
+                    delete window[callbackName];
+                    document.body.removeChild(script);
+                    console.log('📡 JSONP Response:', data);
+                    showAlert('success', '✅ JSONP connection successful!');
+                    resolve(data);
+                };
+                
+                script.onerror = function() {
+                    delete window[callbackName];
+                    document.body.removeChild(script);
+                    console.error('❌ JSONP failed');
+                    reject(new Error('JSONP request failed'));
+                };
+                
+                // Modify URL for JSONP (if your Google Apps Script supports it)
+                script.src = `${WEBAPP_URL}?callback=${callbackName}`;
+                document.body.appendChild(script);
+                
+                // Timeout after 10 seconds
+                setTimeout(() => {
+                    if (window[callbackName]) {
+                        delete window[callbackName];
+                        if (document.body.contains(script)) {
+                            document.body.removeChild(script);
+                        }
+                        reject(new Error('JSONP timeout'));
+                    }
+                }, 10000);
+            });
+        }
+
+        // Initialize form with connection test
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set today's date as default
+            document.getElementById('dateJoined').valueAsDate = new Date();
+            
+            // Test API connection
+            testConnection();
+            
+            // Load existing troopers for search
+            loadExistingTroopers();
+            
+            console.log('🔥 First Order Flame Trooper Activity Tracker loaded!');
+            console.log('📡 Connected to:', WEBAPP_URL);
+        });
+
+        function getWebAppUrl() {
+            return WEBAPP_URL;
+        }
+
+        function showAlert(type, message) {
+            const container = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert ${type}`;
+            alert.textContent = message;
+            alert.style.display = 'block';
+            
+            container.appendChild(alert);
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                alert.style.display = 'none';
+                if (container.contains(alert)) {
+                    container.removeChild(alert);
+                }
+            }, 5000);
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            
+            // Update button states
+            document.getElementById('newUserBtn').classList.toggle('active', mode === 'new');
+            document.getElementById('updateUserBtn').classList.toggle('active', mode === 'update');
+            document.getElementById('searchUserBtn').classList.toggle('active', mode === 'search');
+            
+            // Show/hide sections based on mode
+            document.getElementById('userSearch').style.display = (mode === 'update' || mode === 'search') ? 'block' : 'none';
+            document.getElementById('userDisplay').style.display = mode === 'search' ? 'block' : 'none';
+            document.getElementById('memberForm').style.display = mode === 'search' ? 'none' : 'block';
+            
+            // Update form title and button
+            const submitBtn = document.getElementById('submitBtn');
+            if (mode === 'new') {
+                submitBtn.textContent = 'Create New Trooper';
+                clearForm();
+                makeFieldsEditable();
+            } else if (mode === 'update') {
+                submitBtn.textContent = 'Update Trooper Data';
+                clearForm();
+            } else if (mode === 'search') {
+                clearForm();
+                clearUserDisplay();
+            }
+        }
+
+        async function loadExistingTroopers() {
+            const webAppUrl = getWebAppUrl();
+
+            try {
+                console.log('🔄 Loading existing troopers from API...');
+                console.log('🌐 Making request to:', `${webAppUrl}?action=getAll`);
+                
+                const response = await fetch(`${webAppUrl}?action=getAll`, {
+                    method: 'GET',
+                    mode: 'cors',
+                    headers: {
+                        'Accept': 'application/json',
+                    },
+                });
+                
+                console.log('📡 Load troopers response status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                console.log('📋 Load troopers result:', result);
+                
+                if (result.success) {
+                    window.existingTroopers = result.data || [];
+                    console.log(`✅ Loaded ${window.existingTroopers.length} existing troopers`);
+                    if (window.existingTroopers.length > 0) {
+                        showAlert('success', `📊 Loaded ${window.existingTroopers.length} flame troopers from database`);
+                    }
+                } else {
+                    console.warn('⚠️ API returned success:false -', result.message);
+                    window.existingTroopers = [];
+                    showAlert('warning', 'API returned no data: ' + (result.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('❌ Error loading existing troopers:', error);
+                console.error('Error details:', {
+                    name: error.name,
+                    message: error.message,
+                    stack: error.stack
+                });
+                window.existingTroopers = [];
+                showAlert('warning', '⚠️ Could not load existing trooper data: ' + error.message);
+            }
+        }
+
+        function clearForm() {
+            document.getElementById('memberForm').reset();
+            document.getElementById('dateJoined').valueAsDate = new Date();
+            selectedUser = null;
+        }
+
+        function clearUserDisplay() {
+            document.getElementById('displayUsername').textContent = '🔥 Flame Trooper Profile';
+            document.getElementById('displayStatus').textContent = 'Active';
+            document.getElementById('displayStatus').className = 'user-status';
+            document.getElementById('displayRoblox').textContent = '-';
+            document.getElementById('displayDiscord').textContent = '-';
+            document.getElementById('displayDateJoined').textContent = '-';
+            document.getElementById('displayEvents').textContent = '0';
+            document.getElementById('displayRank').textContent = '-';
+            document.getElementById('displayCompany').textContent = '-';
+            document.getElementById('displayLastEvent').textContent = '-';
+            document.getElementById('displayActivityScore').textContent = '0';
+        }
+
+        function displayUserInfo(user) {
+            document.getElementById('displayUsername').textContent = `🔥 ${user.robloxUsername}`;
+            document.getElementById('displayStatus').textContent = user.status;
+            document.getElementById('displayStatus').className = `user-status ${user.status}`;
+            document.getElementById('displayRoblox').textContent = user.robloxUsername;
+            document.getElementById('displayDiscord').textContent = user.discordUsername;
+            document.getElementById('displayDateJoined').textContent = user.dateJoined;
+            document.getElementById('displayEvents').textContent = user.eventsAttended;
+            document.getElementById('displayRank').textContent = user.rank;
+            document.getElementById('displayCompany').textContent = user.company || 'Unassigned';
+            document.getElementById('displayLastEvent').textContent = user.lastEventDate || 'Never';
+            document.getElementById('displayActivityScore').textContent = user.activityScore || '0';
+        }
+
+        function makeFieldsEditable() {
+            const inputs = document.querySelectorAll('#memberForm input, #memberForm select');
+            inputs.forEach(input => {
+                input.removeAttribute('readonly');
+                input.style.backgroundColor = '';
+                input.style.color = '';
+            });
+        }
+
+        function makeFieldsReadonly(exceptions = []) {
+            const inputs = document.querySelectorAll('#memberForm input, #memberForm select');
+            inputs.forEach(input => {
+                if (!exceptions.includes(input.name)) {
+                    input.setAttribute('readonly', true);
+                    input.style.backgroundColor = '#f8f9fa';
+                    input.style.color = '#6c757d';
+                }
+            });
+        }
+
+        // Search functionality
+        document.getElementById('searchUser').addEventListener('input', async function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const resultsContainer = document.getElementById('searchResults');
+            
+            if (searchTerm.length < 2) {
+                resultsContainer.innerHTML = '';
+                return;
+            }
+            
+            // Search locally first
+            let matches = [];
+            if (window.existingTroopers) {
+                matches = window.existingTroopers.filter(user => 
+                    user.robloxUsername.toLowerCase().includes(searchTerm) ||
+                    user.discordUsername.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            // If no local matches and web app URL is configured, search online
+            if (matches.length === 0) {
+                const webAppUrl = getWebAppUrl();
+                if (webAppUrl) {
+                    try {
+                        const response = await fetch(`${webAppUrl}?action=search&search=${encodeURIComponent(searchTerm)}`);
+                        const result = await response.json();
+                        if (result.success) {
+                            matches = result.data;
+                        }
+                    } catch (error) {
+                        console.error('Error searching online:', error);
+                    }
+                }
+            }
+            
+            resultsContainer.innerHTML = matches.map(user => `
+                <div class="search-result" onclick="selectUser('${user.robloxUsername}')">
+                    <div class="username">${user.robloxUsername}</div>
+                    <div class="details">${user.discordUsername} • ${user.rank} • ${user.status}</div>
+                </div>
+            `).join('');
+        });
+
+        function selectUser(robloxUsername) {
+            const troopers = window.existingTroopers || [];
+            selectedUser = troopers.find(user => user.robloxUsername === robloxUsername);
+            
+            if (selectedUser) {
+                if (currentMode === 'search') {
+                    // Display user info in search mode
+                    displayUserInfo(selectedUser);
+                    document.getElementById('searchUser').value = selectedUser.robloxUsername;
+                    document.getElementById('searchResults').innerHTML = '';
+                } else if (currentMode === 'update') {
+                    // Fill form with existing data for update mode
+                    Object.keys(selectedUser).forEach(key => {
+                        const element = document.getElementById(key);
+                        if (element) {
+                            element.value = selectedUser[key];
+                        }
+                    });
+                    
+                    // Make only certain fields editable for updates
+                    makeFieldsReadonly(['eventsAttended', 'status', 'rank', 'lastEventDate']);
+                    
+                    // Clear search
+                    document.getElementById('searchUser').value = selectedUser.robloxUsername;
+                    document.getElementById('searchResults').innerHTML = '';
+                }
+            }
+        }
+
+        // Form submission
+        document.getElementById('memberForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const webAppUrl = getWebAppUrl();
+
+            if (isSubmitting) return;
+            
+            isSubmitting = true;
+            const submitBtn = document.getElementById('submitBtn');
+            const originalText = submitBtn.textContent;
+            
+            // Show loading state
+            submitBtn.innerHTML = '<span class="loading-spinner"></span> Processing...';
+            submitBtn.disabled = true;
+            
+            try {
+                // Collect form data
+                const formData = new FormData(this);
+                const data = {
+                    action: currentMode === 'update' ? 'update' : 'create'
+                };
+                
+                for (let [key, value] of formData.entries()) {
+                    data[key] = value;
+                }
+                
+                // Send to Google Apps Script
+                console.log('📤 Sending data to Google Apps Script:', data);
+                console.log('🌐 Making POST request to:', webAppUrl);
+                
+                const response = await fetch(webAppUrl, {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                console.log('📥 Response status:', response.status);
+                console.log('📥 Response ok:', response.ok);
+                console.log('📥 Response headers:', Object.fromEntries(response.headers));
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const responseText = await response.text();
+                console.log('📄 Raw response text:', responseText);
+                
+                let result;
+                try {
+                    result = JSON.parse(responseText);
+                } catch (parseError) {
+                    console.error('❌ Failed to parse JSON response:', parseError);
+                    throw new Error('Invalid JSON response from server: ' + responseText.substring(0, 100) + '...');
+                }
+                
+                console.log('📋 Parsed API Response:', result);
+                
+                if (result.success) {
+                    showAlert('success', result.message);
+                    console.log('✅ Operation successful:', result.data);
+                    
+                    if (currentMode === 'create') {
+                        showAlert('success', `🎯 Activity Score: ${result.data.activityScore || 'Calculated'}`);
+                        clearForm();
+                        celebrateSuccess();
+                    }
+                    
+                    // Refresh trooper data
+                    await loadExistingTroopers();
+                    
+                } else {
+                    showAlert('error', result.message || 'Operation failed');
+                    console.error('❌ API Error:', result);
+                }
+                
+            } catch (error) {
+                console.error('❌ Error submitting form:', error);
+                console.error('Error details:', {
+                    name: error.name,
+                    message: error.message,
+                    stack: error.stack
+                });
+                
+                // Try fallback CSV generation if API fails
+                if (currentMode === 'create') {
+                    console.log('🔄 Attempting fallback CSV generation...');
+                    try {
+                        const fallbackResult = generateFallbackCSV(data);
+                        if (fallbackResult.success) {
+                            console.log('✅ Fallback successful');
+                            if (fallbackResult.fallback) {
+                                showAlert('success', `🎯 Activity Score: ${fallbackResult.data.activityScore}`);
+                                celebrateSuccess();
+                            }
+                            return; // Exit here to avoid showing the network error
+                        }
+                    } catch (fallbackError) {
+                        console.error('❌ Fallback also failed:', fallbackError);
+                    }
+                }
+                
+                let errorMessage = '🌐 Network error: Could not connect to Google Apps Script.';
+                
+                if (error.message.includes('CORS')) {
+                    errorMessage += '\n\n🔧 CORS Issue Detected:\n• Redeploy your Google Apps Script\n• Ensure "Anyone" access is set\n• Try the manual CSV fallback above';
+                } else if (error.message.includes('HTTP 4')) {
+                    errorMessage += '\n\n🔧 Client Error (4xx):\n• Check the API URL is correct\n• Verify Google Apps Script deployment';
+                } else if (error.message.includes('HTTP 5')) {
+                    errorMessage += '\n\n🔧 Server Error (5xx):\n• Google Apps Script has an internal error\n• Check your script for syntax errors';
+                } else if (error.name === 'TypeError') {
+                    errorMessage += '\n\n🔧 Connection Failed:\n• Check internet connection\n• Verify API URL is correct\n• Use Debug Panel above to test';
+                }
+                
+                showAlert('error', errorMessage);
+            } finally {
+                // Reset button state
+                isSubmitting = false;
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+
+        // Auto-update Last Event Date when Events Attended changes
+        document.getElementById('eventsAttended').addEventListener('input', function() {
+            if (parseInt(this.value) > 0 && !document.getElementById('lastEventDate').value) {
+                document.getElementById('lastEventDate').valueAsDate = new Date();
+            }
+        });
+
+        // Status color coding
+        document.getElementById('status').addEventListener('change', function() {
+            this.className = '';
+            if (this.value === 'Active') this.classList.add('status-active');
+            else if (this.value === 'Inactive') this.classList.add('status-inactive');
+            else if (this.value === 'Pending') this.classList.add('status-pending');
+        });
+
+        // Form validation and UX improvements
+        const requiredFields = document.querySelectorAll('input[required], select[required]');
+        
+        requiredFields.forEach(field => {
+            field.addEventListener('blur', function() {
+                if (!this.value) {
+                    this.style.borderColor = '#8B0000';
+                    this.style.boxShadow = '0 0 0 3px rgba(139, 0, 0, 0.2)';
+                } else {
+                    this.style.borderColor = '#FF6347';
+                    this.style.boxShadow = '0 0 0 3px rgba(255, 99, 71, 0.2)';
+                }
+            });
+        });
+
+        // Add success animations
+        function celebrateSuccess() {
+            // Create fire particles animation
+            const particles = [];
+            for (let i = 0; i < 20; i++) {
+                const particle = document.createElement('div');
+                particle.style.position = 'fixed';
+                particle.style.width = '6px';
+                particle.style.height = '6px';
+                particle.style.background = `hsl(${Math.random() * 60 + 10}, 100%, 50%)`;
+                particle.style.borderRadius = '50%';
+                particle.style.pointerEvents = 'none';
+                particle.style.zIndex = '9999';
+                particle.style.left = '50%';
+                particle.style.top = '50%';
+                document.body.appendChild(particle);
+                particles.push(particle);
+                
+                // Animate particle
+                const angle = (Math.PI * 2 * i) / 20;
+                const velocity = 100 + Math.random() * 100;
+                let x = 0, y = 0;
+                
+                const animate = () => {
+                    x += Math.cos(angle) * velocity * 0.02;
+                    y += Math.sin(angle) * velocity * 0.02 + 2;
+                    
+                    particle.style.transform = `translate(${x}px, ${y}px)`;
+                    particle.style.opacity = Math.max(0, 1 - y / 200);
+                    
+                    if (particle.style.opacity > 0) {
+                        requestAnimationFrame(animate);
+                    } else {
+                        document.body.removeChild(particle);
+                    }
+                };
+                
+                requestAnimationFrame(animate);
+            }
+        }
+
+        // Periodic refresh of trooper data (every 5 minutes)
+        setInterval(loadExistingTroopers, 5 * 60 * 1000);
+
+        console.log('🔥 First Order Flame Trooper Activity Tracker loaded successfully!');
+        console.log('📡 Google Apps Script Integration: ACTIVE');
+        console.log('🌐 API Endpoint:', WEBAPP_URL);
+        console.log('💡 Pro tips:');
+        console.log('   • Use the mode buttons to switch between Create, Update, and Search');
+        console.log('   • Data auto-refreshes every 5 minutes');
+        console.log('   • Check browser console for detailed API logs');
+    </script>
+</body>
+</html>
