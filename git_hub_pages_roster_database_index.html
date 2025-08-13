@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Roster Database</title>
+  <meta name="description" content="Lightweight roster database + UI. Works on GitHub Pages.">
+  <style>
+    :root{
+      --bg:#0b1020; --card:#111731; --muted:#1b2346; --text:#e6ecff; --sub:#a9b4d8; --accent:#6ea8fe; --danger:#ff6b6b; --ok:#22c55e; --warn:#f59e0b;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Helvetica,Arial,sans-serif;background:radial-gradient(1200px 800px at 10% -10%, #1a237e22, transparent 60%),radial-gradient(800px 600px at 110% 10%, #0ea5e944, transparent 60%),var(--bg);color:var(--text)}
+    .container{max-width:1200px;margin:0 auto;padding:24px}
+    header{display:flex;gap:16px;align-items:center;justify-content:space-between;margin-bottom:16px}
+    .title{display:flex;gap:12px;align-items:center}
+    .title h1{font-size:20px;margin:0}
+    .badge{padding:4px 8px;background:linear-gradient(90deg,#3b82f6,#22d3ee);color:#081226;border-radius:999px;font-weight:700;font-size:11px;letter-spacing:.04em}
+
+    .toolbar{display:grid;grid-template-columns:1fr auto;gap:12px;margin:12px 0}
+    .filters{display:flex;flex-wrap:wrap;gap:8px}
+    .actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
+
+    input[type="text"],select, input[type="date"],input[type="number"]{background:#0e1530;border:1px solid #26305e;color:var(--text);padding:10px 12px;border-radius:10px;outline:none}
+    input::placeholder{color:#6b79a8}
+    button{background:#18224a;border:1px solid #2a3972;color:var(--text);padding:10px 14px;border-radius:12px;cursor:pointer;font-weight:600}
+    button:hover{filter:brightness(1.08)}
+    .btn-accent{background:linear-gradient(180deg,#1d4ed8,#0ea5e9);border:none}
+    .btn-danger{background:#3b1420;border:1px solid #aa2b4a}
+    .btn-ghost{background:transparent;border:1px dashed #31407d}
+
+    .card{background:linear-gradient(180deg,#0c1432,#0a1330 60%, #09122e);border:1px solid #273368;box-shadow:0 8px 30px #0006;border-radius:16px}
+    .card .content{padding:14px}
+
+    table{width:100%;border-collapse:separate;border-spacing:0}
+    thead th{position:sticky;top:0;background:#0f1736;border-bottom:1px solid #2b3973;z-index:1}
+    thead th, tbody td{padding:10px 12px;text-align:left;font-size:13px}
+    tbody tr{border-top:1px solid #212c5a}
+    tbody tr:hover{background:#0f17332f}
+    tbody td{vertical-align:middle}
+    .pill{padding:4px 8px;border-radius:999px;font-weight:700;font-size:11px}
+    .pill.ok{background:#123521;color:#9af2b2}
+    .pill.warn{background:#3a2e12;color:#ffd88a}
+    .pill.danger{background:#3a1620;color:#ff9bb0}
+
+    .table-wrap{overflow:auto;max-height:70vh}
+
+    .footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px;color:var(--sub);font-size:12px}
+
+    /* Modal */
+    dialog::backdrop{background:rgb(2 6 23 / .7)}
+    dialog{border:none;border-radius:16px;padding:0;max-width:680px;width:96vw;background:#0f1736;color:var(--text);box-shadow:0 20px 60px #000c}
+    .modal-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #273368}
+    .modal-body{padding:16px}
+    .grid{display:grid;gap:10px}
+    .grid.cols-2{grid-template-columns:1fr 1fr}
+    .grid.cols-3{grid-template-columns:repeat(3,1fr)}
+    .row-actions{display:flex;gap:6px}
+    .muted{color:#a9b4d8}
+
+    @media (max-width: 900px){
+      .grid.cols-3{grid-template-columns:1fr 1fr}
+    }
+    @media (max-width: 700px){
+      .grid.cols-2,.grid.cols-3{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="title">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M4 7a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V7Z" stroke="#6ea8fe" stroke-width="1.5"/><path d="M4 9.5h16" stroke="#6ea8fe44"/><rect x="7" y="3" width="3" height="2.5" rx=".5" fill="#6ea8fe"/><rect x="14" y="3" width="3" height="2.5" rx=".5" fill="#6ea8fe"/></svg>
+        <h1>Roster Database</h1>
+        <span class="badge">Client‑side · GitHub Pages</span>
+      </div>
+      <div class="actions">
+        <button id="btnAdd" class="btn-accent">+ Add Record</button>
+        <button id="btnExportJSON">Export JSON</button>
+        <button id="btnExportCSV" class="btn-ghost">Export CSV</button>
+        <button id="btnImport" title="Import a data.json file">Import JSON</button>
+        <input id="fileInput" type="file" accept="application/json" hidden />
+      </div>
+    </header>
+
+    <div class="toolbar">
+      <div class="filters">
+        <input id="search" type="text" placeholder="Search all fields (Roblox, Discord, Rank, Company, …)" />
+        <select id="statusFilter"><option value="">Status: All</option></select>
+        <select id="rankFilter"><option value="">Rank: All</option></select>
+        <select id="divisionFilter"><option value="">Division Role: All</option></select>
+        <select id="companyFilter"><option value="">Company: All</option></select>
+      </div>
+      <div class="filters" style="justify-content:flex-end">
+        <button id="btnClear" class="btn-ghost">Clear Filters</button>
+        <button id="btnReset" class="btn-danger" title="Reset to empty dataset (keeps your file intact)">Reset (Empty)</button>
+      </div>
+    </div>
+
+    <section class="card">
+      <div class="content table-wrap">
+        <table id="table">
+          <thead>
+            <tr>
+              <th data-key="robloxUsername">Roblox Username</th>
+              <th data-key="discordUsername">Discord Username</th>
+              <th data-key="dateJoined">Date Joined</th>
+              <th data-key="eventsAttended" style="white-space:nowrap">Events Attended</th>
+              <th data-key="status">Status</th>
+              <th data-key="rank">Rank</th>
+              <th data-key="divisionRole">Division Role</th>
+              <th data-key="company">Company</th>
+              <th data-key="quotaStrikes">Quota Strikes</th>
+              <th data-key="lastUpdated">Last Updated</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="content footer">
+        <div>
+          <span id="count">0</span> record(s) · <span class="muted">Saved to your browser. Use Export to persist to the repo.</span>
+        </div>
+        <div>
+          <small class="muted">Tip: Add a <code>data.json</code> next to this file to preload shared data.</small>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Modal: Add/Edit -->
+  <dialog id="modal">
+    <div class="modal-head">
+      <strong id="modalTitle">Add Record</strong>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span id="formHint" class="muted" style="font-size:12px"></span>
+        <button id="btnClose">✕</button>
+      </div>
+    </div>
+    <form id="form" class="modal-body">
+      <input type="hidden" id="id" />
+      <div class="grid cols-2">
+        <label>Roblox Username
+          <input id="robloxUsername" required placeholder="e.g. Builderman" />
+        </label>
+        <label>Discord Username
+          <input id="discordUsername" required placeholder="e.g. user#1234" />
+        </label>
+      </div>
+      <div class="grid cols-3">
+        <label>Date Joined
+          <input id="dateJoined" type="date" required />
+        </label>
+        <label>Events Attended
+          <input id="eventsAttended" type="number" min="0" value="0" required />
+        </label>
+        <label>Quota Strikes
+          <input id="quotaStrikes" type="number" min="0" value="0" required />
+        </label>
+      </div>
+      <div class="grid cols-2">
+        <label>Status
+          <select id="status" required>
+            <option value="Active">Active</option>
+            <option value="On Leave">On Leave</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+        </label>
+        <label>Rank
+          <input id="rank" placeholder="e.g. Sergeant" />
+        </label>
+      </div>
+      <div class="grid cols-2">
+        <label>Division Role
+          <input id="divisionRole" placeholder="e.g. Logistics" />
+        </label>
+        <label>Company
+          <input id="company" placeholder="e.g. Alpha" />
+        </label>
+      </div>
+      <div class="grid">
+        <button class="btn-accent" type="submit">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    // --- Utility helpers ---
+    const qs = (s, el=document) => el.querySelector(s);
+    const qsa = (s, el=document) => [...el.querySelectorAll(s)];
+    const fmtDate = (d) => {
+      if(!d) return '';
+      const dt = (d instanceof Date) ? d : new Date(d);
+      if(Number.isNaN(dt.getTime())) return '';
+      return dt.toISOString().slice(0,10);
+    }
+    const fmtDateTime = (d) => {
+      const dt = (d instanceof Date) ? d : new Date(d);
+      if(Number.isNaN(dt.getTime())) return '';
+      return new Intl.DateTimeFormat(undefined,{year:'numeric',month:'short',day:'2-digit',hour:'2-digit',minute:'2-digit'}).format(dt);
+    }
+    const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
+
+    // --- Data layer ---
+    const STORE_KEY = 'rosterDataV1';
+    /** @type {Array} */
+    let DATA = [];
+
+    async function loadInitialData(){
+      // 1) Try localStorage first
+      try{
+        const raw = localStorage.getItem(STORE_KEY);
+        if(raw){ DATA = JSON.parse(raw); ensureIds(); return; }
+      }catch{}
+      // 2) Fallback to data.json (optional, same folder)
+      try{
+        const resp = await fetch('data.json?cache=' + Date.now());
+        if(resp.ok){ DATA = await resp.json(); ensureIds(); save(); return; }
+      }catch{}
+      // 3) Seed example (empty by default)
+      DATA = [];
+      save();
+    }
+
+    function ensureIds(){
+      let changed = false;
+      DATA.forEach(r => { if(!r.id){ r.id = uid(); changed = true; }});
+      if(changed) save();
+    }
+
+    function save(){
+      localStorage.setItem(STORE_KEY, JSON.stringify(DATA));
+      render();
+    }
+
+    function clearAll(){
+      DATA = []; save();
+    }
+
+    // --- Rendering ---
+    let sortKey = 'dateJoined'; let sortDir = 'desc';
+
+    function render(){
+      // Filters
+      const search = qs('#search').value.toLowerCase().trim();
+      const fStatus = qs('#statusFilter').value;
+      const fRank = qs('#rankFilter').value;
+      const fDivision = qs('#divisionFilter').value;
+      const fCompany = qs('#companyFilter').value;
+
+      let rows = DATA.filter(r => {
+        const hay = [r.robloxUsername,r.discordUsername,r.status,r.rank,r.divisionRole,r.company,String(r.eventsAttended),String(r.quotaStrikes),r.dateJoined,r.lastUpdated].join(' ').toLowerCase();
+        if(search && !hay.includes(search)) return false;
+        if(fStatus && r.status !== fStatus) return false;
+        if(fRank && r.rank !== fRank) return false;
+        if(fDivision && r.divisionRole !== fDivision) return false;
+        if(fCompany && r.company !== fCompany) return false;
+        return true;
+      });
+
+      // Sort
+      const getVal = (r,k)=>{
+        const v = r[k];
+        if(k==='eventsAttended'||k==='quotaStrikes') return Number(v)||0;
+        if(k==='dateJoined'||k==='lastUpdated') return new Date(v).getTime()||0;
+        return (v||'').toString().toLowerCase();
+      }
+      rows.sort((a,b)=>{
+        const va = getVal(a,sortKey), vb = getVal(b,sortKey);
+        return sortDir==='asc' ? (va>vb?1:va<vb?-1:0) : (va>vb?-1:va<vb?1:0);
+      });
+
+      // Populate table
+      const tbody = qs('#table tbody');
+      tbody.innerHTML = '';
+      for(const r of rows){
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${escapeHtml(r.robloxUsername)}</td>
+          <td>${escapeHtml(r.discordUsername)}</td>
+          <td>${fmtDate(r.dateJoined)}</td>
+          <td style="text-align:right">${Number(r.eventsAttended)||0}</td>
+          <td>${statusPill(r.status)}</td>
+          <td>${escapeHtml(r.rank||'')}</td>
+          <td>${escapeHtml(r.divisionRole||'')}</td>
+          <td>${escapeHtml(r.company||'')}</td>
+          <td style="text-align:right">${Number(r.quotaStrikes)||0}</td>
+          <td>${fmtDateTime(r.lastUpdated)}</td>
+          <td>
+            <div class="row-actions">
+              <button data-act="edit" data-id="${r.id}">Edit</button>
+              <button data-act="del" data-id="${r.id}" class="btn-danger">Delete</button>
+            </div>
+          </td>`;
+        tbody.appendChild(tr);
+      }
+      qs('#count').textContent = rows.length;
+
+      // Build dynamic filter options from DATA
+      buildFilterOptions('#statusFilter', [...new Set(DATA.map(r=>r.status).filter(Boolean))]);
+      buildFilterOptions('#rankFilter', [...new Set(DATA.map(r=>r.rank).filter(Boolean))]);
+      buildFilterOptions('#divisionFilter', [...new Set(DATA.map(r=>r.divisionRole).filter(Boolean))]);
+      buildFilterOptions('#companyFilter', [...new Set(DATA.map(r=>r.company).filter(Boolean))]);
+    }
+
+    function buildFilterOptions(sel, values){
+      const el = qs(sel);
+      const current = el.value;
+      const label = el.options[0].textContent; // first option is label
+      el.innerHTML = `<option value="">${label}</option>` + values.sort().map(v=>`<option>${escapeHtml(v)}</option>`).join('');
+      // try to keep selection if still valid
+      if(values.includes(current)) el.value = current;
+    }
+
+    function statusPill(s){
+      const m = String(s||'').toLowerCase();
+      const cls = m.includes('active')? 'ok' : m.includes('leave')? 'warn' : 'danger';
+      return `<span class="pill ${cls}">${escapeHtml(s||'')}</span>`;
+    }
+
+    function escapeHtml(str=''){
+      return str.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#039;'}[c]));
+    }
+
+    // --- Table header sorting ---
+    qsa('#table thead th[data-key]').forEach(th=>{
+      th.style.cursor='pointer';
+      th.addEventListener('click', ()=>{
+        const key = th.getAttribute('data-key');
+        if(sortKey===key){ sortDir = (sortDir==='asc'?'desc':'asc'); }
+        else{ sortKey = key; sortDir='asc'; }
+        render();
+      })
+    })
+
+    // --- Global controls ---
+    qs('#search').addEventListener('input', render);
+    qs('#statusFilter').addEventListener('change', render);
+    qs('#rankFilter').addEventListener('change', render);
+    qs('#divisionFilter').addEventListener('change', render);
+    qs('#companyFilter').addEventListener('change', render);
+    qs('#btnClear').addEventListener('click', ()=>{
+      qs('#search').value='';
+      ['#statusFilter','#rankFilter','#divisionFilter','#companyFilter'].forEach(s=>qs(s).value='');
+      render();
+    })
+
+    qs('#btnReset').addEventListener('click', ()=>{
+      if(confirm('Reset the in-browser dataset to empty? This does NOT touch your data.json file.')){
+        clearAll();
+      }
+    })
+
+    // --- Add/Edit Modal ---
+    const modal = qs('#modal');
+    qs('#btnAdd').addEventListener('click', ()=> openForm());
+    qs('#btnClose').addEventListener('click', ()=> modal.close());
+
+    qs('#table').addEventListener('click', (e)=>{
+      const btn = e.target.closest('button');
+      if(!btn) return;
+      const id = btn.getAttribute('data-id');
+      if(btn.getAttribute('data-act')==='edit'){
+        const rec = DATA.find(r=>r.id===id); if(rec) openForm(rec);
+      }else if(btn.getAttribute('data-act')==='del'){
+        if(confirm('Delete this record?')){
+          DATA = DATA.filter(r=>r.id!==id); save();
+        }
+      }
+    })
+
+    function openForm(rec){
+      const isEdit = !!rec;
+      qs('#modalTitle').textContent = isEdit? 'Edit Record' : 'Add Record';
+      qs('#formHint').textContent = isEdit? 'Updating will refresh the Last Updated timestamp.' : '';
+      qs('#id').value = rec?.id || '';
+      qs('#robloxUsername').value = rec?.robloxUsername || '';
+      qs('#discordUsername').value = rec?.discordUsername || '';
+      qs('#dateJoined').value = fmtDate(rec?.dateJoined) || '';
+      qs('#eventsAttended').value = rec?.eventsAttended ?? 0;
+      qs('#quotaStrikes').value = rec?.quotaStrikes ?? 0;
+      qs('#status').value = rec?.status || 'Active';
+      qs('#rank').value = rec?.rank || '';
+      qs('#divisionRole').value = rec?.divisionRole || '';
+      qs('#company').value = rec?.company || '';
+      modal.showModal();
+    }
+
+    qs('#form').addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const rec = {
+        id: qs('#id').value || uid(),
+        robloxUsername: qs('#robloxUsername').value.trim(),
+        discordUsername: qs('#discordUsername').value.trim(),
+        dateJoined: qs('#dateJoined').value,
+        eventsAttended: Number(qs('#eventsAttended').value)||0,
+        status: qs('#status').value,
+        rank: qs('#rank').value.trim(),
+        divisionRole: qs('#divisionRole').value.trim(),
+        company: qs('#company').value.trim(),
+        quotaStrikes: Number(qs('#quotaStrikes').value)||0,
+        lastUpdated: new Date().toISOString()
+      };
+      const idx = DATA.findIndex(r=>r.id===rec.id);
+      if(idx>=0) DATA[idx]=rec; else DATA.push(rec);
+      save();
+      modal.close();
+    })
+
+    // --- Import / Export ---
+    qs('#btnImport').addEventListener('click', ()=> qs('#fileInput').click());
+    qs('#fileInput').addEventListener('change', async (e)=>{
+      const file = e.target.files?.[0];
+      if(!file) return;
+      try{
+        const text = await file.text();
+        const arr = JSON.parse(text);
+        if(!Array.isArray(arr)) throw new Error('JSON must be an array of records');
+        // validate/normalize
+        const normalized = arr.map(x=>({
+          id: x.id || uid(),
+          robloxUsername: x.robloxUsername||'',
+          discordUsername: x.discordUsername||'',
+          dateJoined: x.dateJoined||'',
+          eventsAttended: Number(x.eventsAttended)||0,
+          status: x.status||'Active',
+          rank: x.rank||'',
+          divisionRole: x.divisionRole||'',
+          company: x.company||'',
+          quotaStrikes: Number(x.quotaStrikes)||0,
+          lastUpdated: x.lastUpdated || new Date().toISOString()
+        }));
+        DATA = normalized; save();
+        alert('Imported ' + DATA.length + ' records.');
+      }catch(err){
+        alert('Import failed: ' + err.message);
+      }finally{ e.target.value=''; }
+    })
+
+    qs('#btnExportJSON').addEventListener('click', ()=>{
+      downloadFile('data.json', JSON.stringify(DATA, null, 2));
+    })
+
+    qs('#btnExportCSV').addEventListener('click', ()=>{
+      const headers = ['robloxUsername','discordUsername','dateJoined','eventsAttended','status','rank','divisionRole','company','quotaStrikes','lastUpdated'];
+      const rows = [headers.join(',')].concat(DATA.map(r=>headers.map(h=>csvCell(r[h])).join(',')));
+      downloadFile('roster.csv', rows.join('\n'));
+    })
+
+    function csvCell(v){
+      if(v==null) return '';
+      const s = String(v).replaceAll('"','""');
+      if(/[",\n]/.test(s)) return '"'+s+'"';
+      return s;
+    }
+
+    function downloadFile(name, content){
+      const blob = new Blob([content], {type:'application/octet-stream'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = name; a.click();
+      setTimeout(()=>URL.revokeObjectURL(url), 5000);
+    }
+
+    // --- Boot ---
+    (async function(){
+      await loadInitialData();
+      render();
+    })();
+  </script>
+</body>
+</html>
